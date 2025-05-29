@@ -20,8 +20,25 @@ export const notFoundHandler = (req: Request, res: Response, next: NextFunction)
 export const errorHandler = async (err: Error, req: Request, res: Response, next: NextFunction) => {
   const errorLogService = new ErrorLogService();
 
-  if (!(err instanceof BaseError)) {
-    await errorLogService.logError(err as BaseError, req);
+  // BaseError olmayan hataları BaseError'a dönüştür
+  let baseError: BaseError;
+  if (err instanceof BaseError) {
+    baseError = err;
+  } else {
+    // Normal Error'ları BaseError'a dönüştür
+    baseError = new BaseError(
+      ErrorCode.INTERNAL_SERVER_ERROR,
+      err.message || 'Internal Server Error',
+      'error',
+      HttpStatusCode.INTERNAL_SERVER_ERROR
+    );
+  }
+
+  // Hatayı logla
+  try {
+    await errorLogService.logError(baseError, req);
+  } catch (logError) {
+    console.error('Error logging failed:', logError);
   }
 
   let message = 'Internal Server Error';

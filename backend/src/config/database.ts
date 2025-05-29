@@ -11,13 +11,22 @@ const createTestConnection = () => {
 };
 
 const createNormalConnection = () => {
+  // Önce DATABASE_URL varsa onu kullan
+  if (process.env.DATABASE_URL) {
+    return new Sequelize(process.env.DATABASE_URL, {
+      dialect: 'postgres',
+      logging: false,
+    });
+  }
+  
+  // Eğer DATABASE_URL yoksa ayrı ayrı değişkenleri kullan
   return new Sequelize({
     dialect: 'postgres',
-    host: process.env.DB_HOST ?? 'localhost',
+    host: process.env.DB_HOST ?? 'yedt-postgres',
     port: parseInt(process.env.DB_PORT ?? '5432'),
-    username: process.env.DB_USER ?? 'postgres',
-    password: process.env.DB_PASSWORD ?? '1234',
-    database: process.env.DB_NAME ?? 'yedt_case',
+    username: process.env.DB_USER ?? process.env.POSTGRES_USER ?? 'postgres',
+    password: process.env.DB_PASSWORD ?? process.env.POSTGRES_PASSWORD ?? 'postgres123',
+    database: process.env.DB_NAME ?? process.env.POSTGRES_DB ?? 'egitim_yonetim',
     logging: false,
   });
 };
