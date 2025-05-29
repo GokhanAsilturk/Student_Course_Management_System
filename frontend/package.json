@@ -1,0 +1,17 @@
+{
+  "name": "yedt-case-frontend",
+  "version": "1.0.0",
+  "description": "Yedt Case Study Frontend",
+  "private": true,
+  "scripts": {
+    "start:admin": "cd admin ; npm start",
+    "start:client": "cd client ; npm start",
+    "build:admin": "cd admin ; npm run build",
+    "build:client": "cd client ; npm run build",
+    "build": "npm run build:admin ; npm run build:client",
+    "test:admin": "cd admin ; npm test",
+    "test:client": "cd client ; npm test"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,124 @@
+services:
+  # PostgreSQL Veritabanı
+  yedt-postgres:
+    image: postgres:15-alpine
+    container_name: yedt_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-egitim_yonetim}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/docker/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - yedt_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-egitim_yonetim}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  yedt-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: yedt_backend_container
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres123}@yedt-postgres:5432/${POSTGRES_DB:-egitim_yonetim}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PORT: 5000
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/uploads:/app/uploads
+    ports:
+      - "5000:5000"
+    networks:
+      - yedt_network
+    depends_on:
+      yedt-postgres:
+        condition: service_healthy
+    command: sh -c "npm run db:wait ; npm run db:sync ; npm run seed ; npm run dev"
+
+  # Frontend Admin Panel
+  yedt-admin:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile
+      target: development
+    container_name: yedt_fe_admin_container
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+      REACT_APP_TITLE: "YEDT Eğitim Sistemi - Admin"
+      PORT: 3001
+    volumes:
+      - ./frontend/admin:/app
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+    networks:
+      - yedt_network
+    depends_on:
+      - yedt-backend
+    stdin_open: true
+    tty: true
+
+  # Frontend Client Portal
+  yedt-client:
+    build:
+      context: ./frontend/client
+      dockerfile: Dockerfile
+      target: development
+    container_name: yedt_fe_client_container
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+      REACT_APP_TITLE: "YEDT Eğitim Sistemi - Öğrenci"
+      PORT: 3000
+    volumes:
+      - ./frontend/client:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - yedt_network
+    depends_on:
+      - yedt-backend
+    stdin_open: true
+    tty: true
+
+  # PgAdmin (Opsiyonel - Veritabanı Yönetimi)
+  yedt-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: yedt_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@yedt.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - yedt_network
+    depends_on:
+      - yedt-postgres
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+networks:
+  yedt_network:
+    driver: bridge

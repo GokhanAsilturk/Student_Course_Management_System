@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-egitim_yonetim_prod}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_here}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./backups:/backups
+  backend:
+    build:
+      target: production
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-secure_password_here}@postgres:5432/${POSTGRES_DB:-egitim_yonetim_prod}
+    volumes:
+      - ./backend/uploads:/app/uploads
+    command: npm start
+  frontend-admin:
+    build:
+      target: production
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:5000/api}
+    volumes: []
+
+  frontend-client:
+    build:
+      target: production
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:5000/api}
+    volumes: []
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: yedt_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - yedt_network
+    depends_on:
+      - backend
+      - frontend-admin
+      - frontend-client
+
+volumes:
+  postgres_prod_data:
