@@ -20,7 +20,7 @@ cd yedt_case
 
 **Windows:**
 ```cmd
-start.bat
+cmd -> start.bat
 ```
 
 **Linux/Mac:**
