@@ -18,7 +18,7 @@ cd yedt_case
 
 2. Uygulamayı başlatın:
 
-**Windows:**
+**Windows cmd:**
 ```cmd
 start.bat
 ```
