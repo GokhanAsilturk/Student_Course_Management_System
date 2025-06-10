@@ -50,6 +50,7 @@ export interface StudentUpdateBody {
   firstName?: string;
   lastName?: string;
   birthDate?: string;
+  email?: string;
 }
 
 export interface AdminCreateBody {

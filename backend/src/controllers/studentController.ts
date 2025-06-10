@@ -139,7 +139,7 @@ const StudentController = {
     }
   },  updateStudent: async (req: TypedRequest<IdParams, any, StudentUpdateBody>, res: Response, next?: NextFunction): Promise<void> => {
     try {
-      const { firstName, lastName, username, birthDate } = req.body;
+      const { firstName, lastName, username, birthDate, email } = req.body;
       const student = await Student.findByPk(req.params.id, {
         include: [
           {
@@ -170,13 +170,27 @@ const StudentController = {
         }
       }
 
+      // Email benzersizlik kontrolü
+      if (email) {
+        const existingEmail = await User.findOne({
+          where: {
+            email,
+            id: { [Op.ne]: student.userId }
+          }
+        });
+        if (existingEmail) {
+          throw new AppError(ErrorMessage.EMAIL_ALREADY_EXISTS.tr, 409, ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+      }
+
       // User tablosunu güncelle
-      if (firstName || lastName || username) {
+      if (firstName || lastName || username || email) {
         await User.update(
           {
             ...(firstName && { firstName }),
             ...(lastName && { lastName }),
-            ...(username && { username: username })
+            ...(username && { username }),
+            ...(email && { email })
           },
           { where: { id: student.userId } }
         );

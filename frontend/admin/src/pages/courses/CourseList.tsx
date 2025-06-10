@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   Button,
-  Chip,
   IconButton,
   Tooltip,
   Dialog,
@@ -21,26 +20,9 @@ import { useNavigate } from 'react-router-dom';
 import { Course } from '../../types';
 import { courseService } from '../../services';
 import { DataTable, DataTableColumn } from '../../components/common';
-import { useNotification, useConfirmDialog } from '../../hooks';
+import { useNotification } from '../../hooks';
+import { useConfirmDialog } from '../../contexts/ConfirmDialogContext';
 import { formatDate, getErrorMessage } from '../../utils';
-
-const getStatusColor = (isActive: boolean): 'success' | 'default' => {
-  if (isActive) return 'success';
-  return 'default';
-};
-
-const getStatusLabel = (isActive: boolean): string => {
-  if (isActive) return 'Aktif';
-  return 'Pasif';
-};
-
-const StatusChip: React.FC<{ isActive: boolean }> = ({ isActive }) => (
-  <Chip
-    label={getStatusLabel(isActive)}
-    color={getStatusColor(isActive) as any}
-    size="small"
-  />
-);
 
 const ActionsCell: React.FC<{
   course: Course;
@@ -120,28 +102,29 @@ const CourseList: React.FC = () => {
     setSearchTerm(term);
     setPage(0);
   };
-
   const handleDelete = async (courseId: string) => {
+    console.log('handleDelete çağrıldı, courseId:', courseId);
     confirmDelete(
       'Ders', 
       async () => {
+        console.log('confirmDelete callback çağrıldı');
         try {
+          console.log('courseService.deleteCourse çağrılıyor, courseId:', courseId);
           await courseService.deleteCourse(courseId);
+          console.log('Silme işlemi başarılı');
           showSuccess('Ders başarıyla silindi');
           fetchCourses();
         } catch (error) {
+          console.error('Silme işlemi hatası:', error);
           showError(getErrorMessage(error));
         }
       }
     );
   };
-
   const handleViewDetail = (course: Course) => {
     setSelectedCourse(course);
     setDetailDialogOpen(true);
   };
-
-  const renderStatusChip = (isActive: boolean) => <StatusChip isActive={isActive} />;
   
   const renderActions = (row: Course) => (
     <ActionsCell
@@ -151,51 +134,22 @@ const CourseList: React.FC = () => {
       onDelete={handleDelete}
     />
   );
-
   const columns: DataTableColumn<Course>[] = [
-    {
-      id: 'code',
-      label: 'Ders Kodu',
-      minWidth: 120,
-    },
     {
       id: 'name',
       label: 'Ders Adı',
-      minWidth: 200,
+      minWidth: 250,
     },
     {
-      id: 'instructorName',
-      label: 'Öğretim Görevlisi',
+      id: 'description',
+      label: 'Açıklama',
+      minWidth: 300,
+      format: (value: string) => value ?? 'Açıklama yok',
+    },
+    {
+      id: 'createdAt',
+      label: 'Oluşturulma Tarihi',
       minWidth: 150,
-    },
-    {
-      id: 'credits',
-      label: 'Kredi',
-      minWidth: 80,
-      align: 'center',
-    },
-    {
-      id: 'capacity',
-      label: 'Kapasite',
-      minWidth: 100,
-      align: 'center',
-    },
-    {
-      id: 'enrolledCount',
-      label: 'Kayıtlı',
-      minWidth: 100,
-      align: 'center',
-    },
-    {
-      id: 'isActive',
-      label: 'Durum',
-      minWidth: 100,
-      format: renderStatusChip,
-    },
-    {
-      id: 'startDate',
-      label: 'Başlangıç Tarihi',
-      minWidth: 120,
       format: (value: string) => formatDate(value),
     },
     {
@@ -239,8 +193,7 @@ const CourseList: React.FC = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         onSearch={handleSearch}
-        onRefresh={fetchCourses}
-        searchPlaceholder="Ders ara (ders adı, kodu, öğretim görevlisi)..."
+        onRefresh={fetchCourses}        searchPlaceholder="Ders ara (ders adı, açıklama)..."
         searchValue={searchTerm}
       />
 
@@ -251,23 +204,13 @@ const CourseList: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Ders Detayları</DialogTitle>
-        <DialogContent>
+        <DialogTitle>Ders Detayları</DialogTitle>        <DialogContent>
           {selectedCourse && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-              <Typography><strong>Ders Kodu:</strong> {selectedCourse.code}</Typography>
               <Typography><strong>Ders Adı:</strong> {selectedCourse.name}</Typography>
               <Typography><strong>Açıklama:</strong> {selectedCourse.description ?? 'Açıklama yok'}</Typography>
-              <Typography><strong>Öğretim Görevlisi:</strong> {selectedCourse.instructorName ?? 'Belirtilmemiş'}</Typography>
-              <Typography><strong>Kredi:</strong> {selectedCourse.credits}</Typography>
-              <Typography><strong>Kapasite:</strong> {selectedCourse.capacity}</Typography>
-              <Typography><strong>Kayıtlı Öğrenci:</strong> {selectedCourse.enrolledCount}</Typography>
-              <Typography><strong>Başlangıç Tarihi:</strong> {formatDate(selectedCourse.startDate)}</Typography>
-              <Typography><strong>Bitiş Tarihi:</strong> {formatDate(selectedCourse.endDate)}</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <strong>Durum:</strong>
-                <StatusChip isActive={selectedCourse.isActive} />
-              </Box>
+              <Typography><strong>Oluşturulma Tarihi:</strong> {formatDate(selectedCourse.createdAt)}</Typography>
+              <Typography><strong>Güncellenme Tarihi:</strong> {formatDate(selectedCourse.updatedAt)}</Typography>
             </Box>
           )}
         </DialogContent>

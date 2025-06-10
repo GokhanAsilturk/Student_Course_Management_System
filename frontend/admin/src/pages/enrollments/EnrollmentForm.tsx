@@ -314,12 +314,10 @@ export const EnrollmentForm: React.FC = () => {
         <Typography variant="h4" component="h1" fontWeight="bold">
           {isEdit ? 'Kayıt Düzenle' : 'Yeni Kayıt'}
         </Typography>
-      </Box>
-
-      <form onSubmit={formik.handleSubmit}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <Card>
+      </Box>      <form onSubmit={formik.handleSubmit}>
+        <Grid container spacing={3} justifyContent="center">
+          <Grid item xs={12} md={8} lg={6}>
+            <Card sx={{ maxWidth: 800, mx: 'auto' }}>
               <Box p={3}>
                 <Typography variant="h6" gutterBottom>
                   Kayıt Bilgileri
@@ -348,11 +346,11 @@ export const EnrollmentForm: React.FC = () => {
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                         label="Öğrenci *"
-                        disabled={isEdit || loadingStudents}
-                      >
-                        {loadingStudents ? (
+                        disabled={isEdit || loadingStudents}                      >
+                        {loadingStudents && (
                           <MenuItem disabled>Öğrenciler yükleniyor...</MenuItem>
-                        ) : students.length > 0 ? (
+                        )}
+                        {!loadingStudents && students.length > 0 && (
                           students.map((student) => (
                             <MenuItem key={student.id} value={student.id}>
                               <Box display="flex" alignItems="center" gap={2}>
@@ -370,7 +368,8 @@ export const EnrollmentForm: React.FC = () => {
                               </Box>
                             </MenuItem>
                           ))
-                        ) : (
+                        )}
+                        {!loadingStudents && students.length === 0 && (
                           <MenuItem disabled>Öğrenci verisi bulunamadı</MenuItem>
                         )}
                       </Select>
@@ -408,9 +407,8 @@ export const EnrollmentForm: React.FC = () => {
                                 <Box>
                                   <Typography variant="body2">
                                     {course.name}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {course.code} - {course.credits} Kredi
+                                  </Typography>                                  <Typography variant="caption" color="text.secondary">
+                                    {course.description ?? 'Açıklama yok'}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -477,13 +475,11 @@ export const EnrollmentForm: React.FC = () => {
                 </Grid>
               </Box>
             </Card>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
+          </Grid>          <Grid item xs={12} md={4}>
             <Stack spacing={3}>
               {/* Selected Student Info */}
               {selectedStudent && (
-                <Card>
+                <Card sx={{ maxWidth: 400, mx: 'auto' }}>
                   <Box p={3}>
                     <Typography variant="h6" gutterBottom>
                       Seçilen Öğrenci
@@ -515,11 +511,9 @@ export const EnrollmentForm: React.FC = () => {
                     </Paper>
                   </Box>
                 </Card>
-              )}
-
-              {/* Selected Course Info */}
+              )}              {/* Selected Course Info */}
               {selectedCourse && (
-                <Card>
+                <Card sx={{ maxWidth: 400, mx: 'auto' }}>
                   <Box p={3}>
                     <Typography variant="h6" gutterBottom>
                       Seçilen Ders
@@ -530,36 +524,28 @@ export const EnrollmentForm: React.FC = () => {
                           <Avatar sx={{ bgcolor: 'secondary.main' }}>
                             <SchoolIcon />
                           </Avatar>
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="medium">
+                          <Box>                            <Typography variant="subtitle1" fontWeight="medium">
                               {selectedCourse.name}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {selectedCourse.code}
+                              {selectedCourse.description ?? 'Açıklama yok'}
                             </Typography>
                           </Box>
                         </Box>
                         <Box>
                           <Typography variant="body2" color="text.secondary">
-                            Kredi: {selectedCourse.credits}
+                            Oluşturulma: {formatDate(selectedCourse.createdAt)}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Durum: {selectedCourse.isActive ? 'Aktif' : 'Pasif'}
+                            Güncellenme: {formatDate(selectedCourse.updatedAt)}
                           </Typography>
-                          {selectedCourse.startDate ? (
-                            <Typography variant="body2" color="text.secondary">
-                              Başlangıç: {formatDate(selectedCourse.startDate)}
-                            </Typography>
-                          ) : null}
                         </Box>
                       </Stack>
                     </Paper>
                   </Box>
                 </Card>
-              )}
-
-              {/* Actions */}
-              <Card>
+              )}              {/* Actions */}
+              <Card sx={{ maxWidth: 400, mx: 'auto' }}>
                 <Box p={3}>
                   <Stack spacing={2}>
                     <Button

@@ -70,12 +70,10 @@ export const validateDateRange = (startDate: string, endDate: string): boolean =
 export const studentValidationSchema = yup.object({
   username: yup
     .string()
-    .required('Kullanıcı adı zorunludur')
     .min(3, 'Kullanıcı adı en az 3 karakter olmalıdır')
     .max(50, 'Kullanıcı adı en fazla 50 karakter olabilir'),
   password: yup
     .string()
-    .required('Şifre zorunludur')
     .min(6, 'Şifre en az 6 karakter olmalıdır')
     .max(100, 'Şifre en fazla 100 karakter olabilir'),
   firstName: yup
@@ -92,19 +90,19 @@ export const studentValidationSchema = yup.object({
     .string()
     .required('E-posta alanı zorunludur')
     .email('Geçerli bir e-posta adresi giriniz'),
-  dateOfBirth: yup
+  birthDate: yup
     .string()
-    .required('Doğum tarihi zorunludur')
+    .optional()
     .test('valid-date', 'Geçerli bir tarih giriniz', function(value) {
-      if (!value) return false;
+      if (!value) return true; // Boş değerlere izin ver
       return !isNaN(Date.parse(value));
     })
     .test('future-date', 'Doğum tarihi gelecek bir tarih olamaz', function(value) {
-      if (!value) return false;
+      if (!value) return true;
       return new Date(value) < new Date();
     })
     .test('age', 'Yaş en az 16 olmalıdır', function(value) {
-      if (!value) return false;
+      if (!value) return true;
       const today = new Date();
       const birthDate = new Date(value);
       const age = today.getFullYear() - birthDate.getFullYear();
@@ -114,6 +112,13 @@ export const studentValidationSchema = yup.object({
       }
       return age >= 16;
     }),
+  status: yup
+    .string()
+    .oneOf(['active', 'inactive', 'graduated', 'suspended'], 'Geçersiz durum')
+    .optional(),
+  isActive: yup
+    .boolean()
+    .optional(),
   phone: yup
     .string()
     .optional()

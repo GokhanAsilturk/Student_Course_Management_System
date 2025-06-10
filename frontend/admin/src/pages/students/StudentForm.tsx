@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   Card,
@@ -6,24 +6,22 @@ import {
   Typography,
   TextField,
   Button,
-  Grid,  FormControlLabel,
+  Grid,
+  FormControlLabel,
   Switch,
   Alert,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-  ArrowBack as BackIcon,
-} from '@mui/icons-material';
-import { useFormik } from 'formik';
-import { useNavigate, useParams } from 'react-router-dom';
-import { studentValidationSchema } from '../../utils/validation';
-import { studentService } from '../../services';
-import { useNotification } from '../../hooks';
-import { CreateStudentRequest, UpdateStudentRequest } from '../../types';
+} from "@mui/material";
+import { Save as SaveIcon, ArrowBack as BackIcon } from "@mui/icons-material";
+import { useFormik } from "formik";
+import { useNavigate, useParams } from "react-router-dom";
+import * as yup from "yup";
+import { studentService } from "../../services";
+import { useNotification } from "../../hooks";
+import { CreateStudentRequest, UpdateStudentRequest } from "../../types";
 
 const StudentForm: React.FC = () => {
   const navigate = useNavigate();
@@ -32,67 +30,124 @@ const StudentForm: React.FC = () => {
   const { showSuccess, showError } = useNotification();
   const [loading, setLoading] = React.useState(false);
   const [initialLoading, setInitialLoading] = React.useState(false);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);const formik = useFormik({
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+
+  // Dinamik validation schema
+  const getValidationSchema = () => {
+    return yup.object({
+      username: isEdit 
+        ? yup.string().optional() 
+        : yup.string()
+          .required('Kullanıcı adı zorunludur')
+          .min(3, 'Kullanıcı adı en az 3 karakter olmalıdır')
+          .max(50, 'Kullanıcı adı en fazla 50 karakter olabilir'),
+      password: isEdit 
+        ? yup.string().optional() 
+        : yup.string()
+          .required('Şifre zorunludur')
+          .min(6, 'Şifre en az 6 karakter olmalıdır')
+          .max(100, 'Şifre en fazla 100 karakter olabilir'),
+      firstName: yup
+        .string()
+        .required('Ad alanı zorunludur')
+        .min(2, 'Ad en az 2 karakter olmalıdır')
+        .max(50, 'Ad en fazla 50 karakter olabilir'),
+      lastName: yup
+        .string()
+        .required('Soyad alanı zorunludur')
+        .min(2, 'Soyad en az 2 karakter olmalıdır')
+        .max(50, 'Soyad en fazla 50 karakter olabilir'),
+      email: yup
+        .string()
+        .required('E-posta alanı zorunludur')
+        .email('Geçerli bir e-posta adresi giriniz'),
+      birthDate: yup
+        .string()
+        .optional()
+        .test('valid-date', 'Geçerli bir tarih giriniz', function(value) {
+          if (!value) return true;
+          return !isNaN(Date.parse(value));
+        })
+        .test('future-date', 'Doğum tarihi gelecek bir tarih olamaz', function(value) {
+          if (!value) return true;
+          return new Date(value) < new Date();
+        }),
+      status: yup
+        .string()
+        .oneOf(['active', 'inactive', 'graduated', 'suspended'], 'Geçersiz durum')
+        .optional(),
+      isActive: yup
+        .boolean()
+        .optional(),
+    });
+  };const formik = useFormik({
     initialValues: {
-      username: '',
-      password: '',
-      firstName: '',
-      lastName: '',
-      email: '',
-      birthDate: '', // Form içinde kullanılacak
-      status: 'active' as 'active' | 'inactive' | 'graduated' | 'suspended',
+      username: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      birthDate: "", // Form içinde kullanılacak
+      status: "active" as "active" | "inactive" | "graduated" | "suspended",
       isActive: true,
-    },
-    validationSchema: studentValidationSchema,
+    },    validationSchema: getValidationSchema(),
     onSubmit: async (values) => {
       setLoading(true);
       setSubmitError(null);
 
-      try {        if (isEdit && id) {          // ISO formatında tarih gönderiyoruz
-          const birthDate = values.birthDate ? new Date(values.birthDate).toISOString().split('T')[0] : '';
-          
+      try {
+        if (isEdit && id) {
+          // ISO formatında tarih gönderiyoruz
+          const birthDate = values.birthDate
+            ? new Date(values.birthDate).toISOString().split("T")[0]
+            : "";
+
           const updateData: UpdateStudentRequest = {
             firstName: values.firstName,
             lastName: values.lastName,
             email: values.email,
             birthDate: birthDate,
-            isActive: values.isActive
+            isActive: values.isActive,
           };
-          
-          console.log('Update data being sent:', updateData); // Debug için
+
+          console.log("Update data being sent:", updateData); // Debug için
           const result = await studentService.updateStudent(id, updateData);
-          console.log('Update result:', result); // Debug için
-          
-          showSuccess('Öğrenci başarıyla güncellendi');
-          
+          console.log("Update result:", result); // Debug için
+
+          showSuccess("Öğrenci başarıyla güncellendi");
+
           // Başarı mesajı görünsün diye kısa bir bekleme
           setTimeout(() => {
-            navigate('/students');
+            navigate("/students");
           }, 1500);
         } else {
           // ISO formatında tarih gönderiyoruz
-          const birthDate = values.birthDate ? new Date(values.birthDate).toISOString().split('T')[0] : '';
-          
+          const birthDate = values.birthDate
+            ? new Date(values.birthDate).toISOString().split("T")[0]
+            : "";
+
           const createData: CreateStudentRequest = {
             username: values.username,
             password: values.password,
             firstName: values.firstName,
             lastName: values.lastName,
             email: values.email,
-            birthDate: birthDate // Backend birthDate bekliyor
+            birthDate: birthDate, // Backend birthDate bekliyor
           };
           await studentService.createStudent(createData);
-          showSuccess('Öğrenci başarıyla eklendi');
-          
+          showSuccess("Öğrenci başarıyla eklendi");
+
           // Başarı mesajı görünsün diye kısa bir bekleme
           setTimeout(() => {
-            navigate('/students');
+            navigate("/students");
           }, 1500);
         }
       } catch (error: any) {
-        setSubmitError(error.message ?? 'Bir hata oluştu');
+        setSubmitError(error.message ?? "Bir hata oluştu");
         showError(
-          isEdit ? 'Öğrenci güncellenirken hata oluştu' : 'Öğrenci eklenirken hata oluştu'
+          isEdit
+            ? "Öğrenci güncellenirken hata oluştu"
+            : "Öğrenci eklenirken hata oluştu"
         );
       } finally {
         setLoading(false);
@@ -105,26 +160,26 @@ const StudentForm: React.FC = () => {
         try {
           setInitialLoading(true);
           const student = (await studentService.getStudent(id)).data;
-          console.log('Loaded student data:', student); // Debug için
-            // Backend'den gelen veri yapısını kontrol et
+          console.log("Loaded student data:", student); // Debug için
+          // Backend'den gelen veri yapısını kontrol et
           if (student) {
             formik.setValues({
-              username: student.user.username || '', 
-              password: '', // Güvenlik nedeniyle boş bırakılıyor
-              firstName: student.user.firstName || '',
-              lastName: student.user.lastName || '',
-              email: student.user.email || '',
-              birthDate: student.birthDate.split('T')[0],
-              status: 'active',
+              username: student.user.username || "",
+              password: "", // Güvenlik nedeniyle boş bırakılıyor
+              firstName: student.user.firstName || "",
+              lastName: student.user.lastName || "",
+              email: student.user.email || "",
+              birthDate: student.birthDate.split("T")[0],
+              status: "active",
               isActive: true,
             });
           } else {
-            console.error('Student data structure is unexpected:', student);
-            showError('Öğrenci verileri beklenmeyen formatta');
+            console.error("Student data structure is unexpected:", student);
+            showError("Öğrenci verileri beklenmeyen formatta");
           }
         } catch (error) {
-          console.error('Error loading student:', error);
-          showError('Öğrenci verileri yüklenirken hata oluştu');
+          console.error("Error loading student:", error);
+          showError("Öğrenci verileri yüklenirken hata oluştu");
           // Hata durumunda otomatik yönlendirme yapmayalım, kullanıcı karar versin
         } finally {
           setInitialLoading(false);
@@ -132,14 +187,16 @@ const StudentForm: React.FC = () => {
       };
       loadStudent();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, id]);
 
   const handleBack = () => {
-    navigate('/students');
+    navigate("/students");
   };
 
-  return (    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+  return (
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
         <Button
           startIcon={<BackIcon />}
           onClick={handleBack}
@@ -149,14 +206,21 @@ const StudentForm: React.FC = () => {
           Geri
         </Button>
         <Typography variant="h4" component="h1">
-          {isEdit ? 'Öğrenci Düzenle' : 'Yeni Öğrenci Ekle'}
+          {isEdit ? "Öğrenci Düzenle" : "Yeni Öğrenci Ekle"}
         </Typography>
       </Box>
 
       {initialLoading ? (
         <Card elevation={3}>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                py: 8,
+              }}
+            >
               <Typography>Öğrenci verileri yükleniyor...</Typography>
             </Box>
           </CardContent>
@@ -169,157 +233,195 @@ const StudentForm: React.FC = () => {
                 <Alert severity="error" sx={{ mb: 3 }}>
                   {submitError}
                 </Alert>
-              )}<Grid container spacing={3}>
-              {!isEdit && (
-                <>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      id="username"
-                      name="username"
-                      label="Kullanıcı Adı *"
-                      value={formik.values.username}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      error={formik.touched.username && Boolean(formik.errors.username)}
-                      helperText={formik.touched.username && formik.errors.username}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      id="password"
-                      name="password"
-                      label="Şifre *"
-                      type="password"
-                      value={formik.values.password}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      error={formik.touched.password && Boolean(formik.errors.password)}
-                      helperText={formik.touched.password && formik.errors.password}
-                    />
-                  </Grid>
-                </>
               )}
+              <Grid container spacing={3}>
+                {!isEdit && (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        id="username"
+                        name="username"
+                        label="Kullanıcı Adı *"
+                        value={formik.values.username}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={
+                          formik.touched.username &&
+                          Boolean(formik.errors.username)
+                        }
+                        helperText={
+                          formik.touched.username && formik.errors.username
+                        }
+                      />
+                    </Grid>
 
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  id="firstName"
-                  name="firstName"
-                  label="Ad *"
-                  value={formik.values.firstName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.firstName && Boolean(formik.errors.firstName)}
-                  helperText={formik.touched.firstName && formik.errors.firstName}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  id="lastName"
-                  name="lastName"
-                  label="Soyad *"
-                  value={formik.values.lastName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.lastName && Boolean(formik.errors.lastName)}
-                  helperText={formik.touched.lastName && formik.errors.lastName}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  id="email"
-                  name="email"
-                  label="E-posta *"
-                  type="email"
-                  value={formik.values.email}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.email && Boolean(formik.errors.email)}
-                  helperText={formik.touched.email && formik.errors.email}
-                />
-              </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        id="password"
+                        name="password"
+                        label="Şifre *"
+                        type="password"
+                        value={formik.values.password}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={
+                          formik.touched.password &&
+                          Boolean(formik.errors.password)
+                        }
+                        helperText={
+                          formik.touched.password && formik.errors.password
+                        }
+                      />
+                    </Grid>
+                  </>
+                )}
                 <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  id="birthDate"
-                  name="birthDate"
-                  label="Doğum Tarihi"
-                  type="date"
-                  value={formik.values.birthDate}
-                  onChange={formik.handleChange}
-                  onBlur={(e) => {
-                    formik.handleBlur(e);
-                    // Tarihin geçerli olduğundan emin ol
-                    if (e.target.value && !isNaN(Date.parse(e.target.value))) {
-                      // Formik değerini değiştir - bu değer ISO formatında olacak
-                      formik.setFieldValue('birthDate', e.target.value);
-                    }
-                  }}
-                  error={formik.touched.birthDate && Boolean(formik.errors.birthDate)}
-                  helperText={formik.touched.birthDate && formik.errors.birthDate}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid><Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Durum</InputLabel>
-                  <Select
-                    id="status"
-                    name="status"
-                    value={formik.values.status}
+                  <TextField
+                    fullWidth
+                    id="firstName"
+                    name="firstName"
+                    label="Ad *"
+                    value={formik.values.firstName}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    error={formik.touched.status && Boolean(formik.errors.status)}
+                    error={
+                      formik.touched.firstName &&
+                      Boolean(formik.errors.firstName)
+                    }
+                    helperText={
+                      formik.touched.firstName && formik.errors.firstName
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    id="lastName"
+                    name="lastName"
+                    label="Soyad *"
+                    value={formik.values.lastName}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.lastName && Boolean(formik.errors.lastName)
+                    }
+                    helperText={
+                      formik.touched.lastName && formik.errors.lastName
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    id="email"
+                    name="email"
+                    label="E-posta *"
+                    type="email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.email && Boolean(formik.errors.email)}
+                    helperText={formik.touched.email && formik.errors.email}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    id="birthDate"
+                    name="birthDate"
+                    label="Doğum Tarihi"
+                    type="date"
+                    value={formik.values.birthDate}
+                    onChange={formik.handleChange}
+                    onBlur={(e) => {
+                      formik.handleBlur(e);
+                      // Tarihin geçerli olduğundan emin ol
+                      if (
+                        e.target.value &&
+                        !isNaN(Date.parse(e.target.value))
+                      ) {
+                        // Formik değerini değiştir - bu değer ISO formatında olacak
+                        formik.setFieldValue("birthDate", e.target.value);
+                      }
+                    }}
+                    error={
+                      formik.touched.birthDate &&
+                      Boolean(formik.errors.birthDate)
+                    }
+                    helperText={
+                      formik.touched.birthDate && formik.errors.birthDate
+                    }
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Durum</InputLabel>
+                    <Select
+                      id="status"
+                      name="status"
+                      value={formik.values.status}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      error={
+                        formik.touched.status && Boolean(formik.errors.status)
+                      }
+                    >
+                      <MenuItem value="active">Aktif</MenuItem>
+                      <MenuItem value="inactive">Pasif</MenuItem>
+                      <MenuItem value="graduated">Mezun</MenuItem>
+                      <MenuItem value="suspended">Askıda</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>{" "}
+                <Grid item xs={12} md={6}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formik.values.isActive}
+                        onChange={(e) =>
+                          formik.setFieldValue("isActive", e.target.checked)
+                        }
+                        name="isActive"
+                      />
+                    }
+                    label="Aktif"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}
                   >
-                    <MenuItem value="active">Aktif</MenuItem>
-                    <MenuItem value="inactive">Pasif</MenuItem>
-                    <MenuItem value="graduated">Mezun</MenuItem>
-                    <MenuItem value="suspended">Askıda</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formik.values.isActive}
-                      onChange={(e) => formik.setFieldValue('isActive', e.target.checked)}
-                      name="isActive"
-                    />
-                  }
-                  label="Aktif"
-                />
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={handleBack}
+                      disabled={loading}
+                    >
+                      İptal
+                    </Button>{" "}
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      startIcon={<SaveIcon />}
+                      disabled={loading}
+                    >
+                      {loading
+                        ? "Kaydediliyor..."
+                        : isEdit
+                        ? "Güncelle"
+                        : "Kaydet"}
+                    </Button>
+                  </Box>
+                </Grid>{" "}
               </Grid>
-
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={handleBack}
-                    disabled={loading}
-                  >
-                    İptal
-                  </Button>                  <Button
-                    type="submit"
-                    variant="contained"
-                    startIcon={<SaveIcon />}
-                    disabled={loading}
-                  >
-                    {loading ? 'Kaydediliyor...' : isEdit ? 'Güncelle' : 'Kaydet'}
-                  </Button>
-                </Box>
-              </Grid>            </Grid>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
       )}
     </Box>
   );

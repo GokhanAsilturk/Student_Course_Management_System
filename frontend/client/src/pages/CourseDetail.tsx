@@ -205,12 +205,6 @@ const CourseDetail: React.FC = () => {
         </Grid>
       </Paper>
 
-      {enrollmentError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          İşlem sırasında bir hata oluştu: {enrollmentError}
-        </Alert>
-      )}
-
       <Divider sx={{ my: 3 }} />
 
       <Grid container spacing={3}>

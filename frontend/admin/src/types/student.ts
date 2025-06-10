@@ -13,6 +13,8 @@ export interface Student {
   createdAt: string;
   updatedAt: string;
   user: UserNested;
+  status?: 'active' | 'inactive' | 'graduated' | 'suspended';
+  isActive?: boolean;
 }
 
 export interface CreateStudentRequest {
@@ -27,6 +29,7 @@ export interface CreateStudentRequest {
 export interface UpdateStudentRequest extends Partial<CreateStudentRequest> {
   isActive?: boolean;
   birthDate?: string; // Update sırasında da gönderilebilir
+  status?: 'active' | 'inactive' | 'graduated' | 'suspended';
 }
 
 export interface StudentFilters {

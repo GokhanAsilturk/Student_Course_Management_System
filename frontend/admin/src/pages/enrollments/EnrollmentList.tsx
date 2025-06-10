@@ -33,8 +33,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { DataTable, DataTableColumn } from '../../components/common/DataTable';
-import { ConfirmDialog } from '../../components/common/ConfirmDialog';
-import { useNotification, useConfirmDialog } from '../../hooks';
+import { useNotification } from '../../hooks';
+import { useConfirmDialog } from '../../contexts/ConfirmDialogContext';
 import { enrollmentService, studentService, courseService } from '../../services';
 import { EnrollmentWithDetails, EnrollmentStatus, EnrollmentFilters, Student, Course } from '../../types';
 import { formatDate, getErrorMessage } from '../../utils';
@@ -75,12 +75,7 @@ const ActionsCell: React.FC<{
 export const EnrollmentList: React.FC = () => {
   const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
-  const { 
-    confirmDelete, 
-    dialogState, 
-    handleConfirm, 
-    handleCancel 
-  } = useConfirmDialog();
+  const { confirmDelete } = useConfirmDialog();
   
   const [enrollments, setEnrollments] = useState<EnrollmentWithDetails[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -120,7 +115,7 @@ export const EnrollmentList: React.FC = () => {
             let studentName = 'Bilinmeyen Öğrenci';
             let studentEmail = '';
             let courseName = enrollment.course?.name || 'Bilinmeyen Ders';
-            let courseCode = enrollment.course?.code || '';
+          
             
             if (enrollment.studentId) {
               try {
@@ -141,8 +136,7 @@ export const EnrollmentList: React.FC = () => {
               ...enrollment,
               studentName,
               studentEmail,
-              courseName,
-              courseCode
+              courseName
             };
           })
         );
@@ -454,7 +448,7 @@ export const EnrollmentList: React.FC = () => {
                   {Array.isArray(courses) && courses.length > 0 ? (
                     courses.map((course) => (
                       <MenuItem key={course.id} value={course.id}>
-                        {course.name} ({course.code})
+                        {course.name} 
                       </MenuItem>
                     ))
                   ) : (
@@ -593,17 +587,10 @@ export const EnrollmentList: React.FC = () => {
                 setDetailDialogOpen(false);
                 navigate(`${ROUTES.ENROLLMENTS}/edit/${selectedEnrollment.id}`);
               }}
-            >
-              Düzenle
+            >              Düzenle
             </Button>
           )}        </DialogActions>
       </Dialog>
-
-      <ConfirmDialog
-        dialogState={dialogState}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-      />
     </Box>
   );
 };

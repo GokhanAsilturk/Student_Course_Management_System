@@ -20,7 +20,8 @@ import { useNavigate } from 'react-router-dom';
 import { Student } from '../../types';
 import { studentService } from '../../services';
 import { DataTable, DataTableColumn } from '../../components/common';
-import { useNotification, useConfirmDialog } from '../../hooks';
+import { useNotification } from '../../hooks';
+import { useConfirmDialog } from '../../contexts/ConfirmDialogContext';
 import { formatDate, getErrorMessage } from '../../utils';
 
 const ActionsCell: React.FC<{

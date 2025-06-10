@@ -3,7 +3,8 @@ import { Box, Toolbar } from '@mui/material';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import { NotificationSnackbar, ConfirmDialog } from '../common';
-import { useNotification, useConfirmDialog } from '../../hooks';
+import { useNotification } from '../../hooks';
+import { useConfirmDialog } from '../../contexts/ConfirmDialogContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
