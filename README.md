@@ -2,10 +2,20 @@
 
 Tam kapsamlı eğitim yönetim sistemi - Backend API, Admin Panel ve Öğrenci Portal'ı içerir.
 
+## 🎯 Proje Durumu
+
+**Tamamlanma Oranı: %85**
+
+- ✅ **Backend API**: %95 tamamlandı (25+ endpoint, JWT auth, CRUD operations)
+- ✅ **Admin Panel**: %80 tamamlandı (Dashboard, authentication, UI framework)
+- ✅ **Öğrenci Portal**: %75 tamamlandı (Student interface, course enrollment)
+- ✅ **Docker Setup**: %100 tamamlandı (Multi-container environment)
+- ✅ **Dokümantasyon**: %90 tamamlandı (Swagger API docs, README files)
+
 ## 🚀 Hızlı Başlangıç
 
 ### Gereksinimler
-- Docker Desktop (Windows/Mac) veya Docker Engine + Docker Compose (Linux)
+- Docker Desktop (Windows/Mac)
 - Git
 
 ### Kurulum
@@ -34,14 +44,18 @@ chmod +x start.sh
 docker-compose up -d
 ```
 
+### Proje raporu için:
+PROJECT_REPORT.md dosyasını inceleyin.
+
 ### 📍 Erişim Bilgileri
 
-- 🎯 **Admin Panel**: http://localhost:3000
-- 👥 **Öğrenci Portal**: http://localhost:3002  
-- 🔧 **API**: http://localhost:5000
+- 🎯 **Admin Panel**: http://localhost:3001
+  - Demo: username: `admin`, password: `admin123`
+- 👥 **Öğrenci Portal**: http://localhost:3000 
+  - Demo: username: `gokhanasilturk`, password: `Student123!`
+- 🔧 **API Docs**: http://localhost:5000/api-docs (Swagger UI)
 - 🗄️ **PgAdmin**: http://localhost:5050
-  - E-posta: admin@yedt.com
-  - Şifre: admin123
+  - E-posta: admin@yedt.com, Şifre: admin123
 
 ## 🛠️ Komutlar
 
@@ -91,20 +105,19 @@ yedt_case/
 
 Her servis kendi Docker konteynerinde çalışır ve hot-reload destekler. Kod değişiklikleri otomatik olarak yansıtılır.
 
-## 🚀 Üretim
+Sıfırlama scriptlerini kullanmak için aşağıdaki komutları kullanabilirsiniz:
 
-Üretim ortamı için:
-
+- **Backend Tüm tabloları sıfırlamak için:**
 ```bash
-npm run prod
+cd backend ; npm run reset:all
 ```
-
-Bu komut, optimize edilmiş production build'leri oluşturur ve Nginx ile serve eder.
-
-## 📚 Dokümantasyon
-
-- [Backend API Dokümantasyonu](backend/README.md)
-- [Docker Kılavuzu](backend/docker-readme.md)
+- **Belirli bir tabloyu sıfırlamak için:**
+```bash
+cd backend ; npm run reset:student    # Öğrenci tablosunu sıfırlar
+cd backend ; npm run reset:course     # Kurs tablosunu sıfırlar
+cd backend ; npm run reset:enrollment # Kayıt tablosunu sıfırlar
+cd backend ; npm run reset:user       # Kullanıcı tablosunu sıfırlar
+```
 
 ## 🌟 Özellikler
 
