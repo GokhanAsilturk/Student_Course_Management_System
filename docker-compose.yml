@@ -16,7 +16,11 @@ services:
     networks:
       - yedt_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-yedt_case}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-yedt_case}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -105,7 +109,7 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@yedt.com
       PGADMIN_DEFAULT_PASSWORD: admin123
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_SERVER_MODE: "False"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     ports:

@@ -94,3 +94,11 @@ export interface RecentActivity {
   createdAt: string;
   user?: string;
 }
+
+export interface PaginatedActivities {
+  activities: RecentActivity[];
+  currentPage: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}

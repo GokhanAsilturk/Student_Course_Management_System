@@ -16,6 +16,8 @@ import {
   Skeleton,
   IconButton,
   Tooltip,
+  Pagination,
+  Stack,
 } from '@mui/material';
 import {
   People,
@@ -28,7 +30,7 @@ import {
   Refresh,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { DashboardStats, RecentActivity } from '../../types';
+import { DashboardStats, RecentActivity, PaginatedActivities } from '../../types';
 import { dashboardService } from '../../services';
 
 interface StatCardProps {
@@ -144,24 +146,26 @@ const Dashboard: React.FC = () => {
     totalCourses: 0,
     totalEnrollments: 0,
     activeCourses: 0,
-  });  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  });
+  const [paginatedActivities, setPaginatedActivities] = useState<PaginatedActivities>({
+    activities: [],
+    currentPage: 1,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
   const [loading, setLoading] = useState(true);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   // API'den verileri çekme fonksiyonu
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Dashboard verilerini paralel olarak çek
-      const [statsData, activitiesData] = await Promise.all([
-        dashboardService.getDashboardStats(),
-        dashboardService.getRecentActivities()
-      ]);
-
+      // Dashboard istatistiklerini çek
+      const statsData = await dashboardService.getDashboardStats();
       setStats(statsData);
-      setRecentActivities(activitiesData);
     } catch (err) {
       console.error('Dashboard veri yükleme hatası:', err);
       setError('Dashboard verileri yüklenirken bir hata oluştu.');
@@ -170,14 +174,35 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Aktiviteleri sayfalı olarak çekme fonksiyonu
+  const fetchActivities = async (page: number = 1) => {
+    try {
+      setActivitiesLoading(true);
+      
+      const activitiesData = await dashboardService.getPaginatedActivities(page);
+      setPaginatedActivities(activitiesData);
+    } catch (err) {
+      console.error('Aktiviteler yükleme hatası:', err);
+      setError('Aktiviteler yüklenirken bir hata oluştu.');
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
   // İlk yükleme
   useEffect(() => {
     fetchDashboardData();
+    fetchActivities(1);
   }, []);
 
   // Manuel yenileme fonksiyonu
   const handleRefresh = async () => {
     await fetchDashboardData();
+    await fetchActivities(paginatedActivities.currentPage);
+  };
+
+  // Sayfa değişim fonksiyonu
+  const handlePageChange = async (event: React.ChangeEvent<unknown>, page: number) => {
+    await fetchActivities(page);
   };
 
   const handleQuickAction = (action: string) => {
@@ -301,10 +326,10 @@ const Dashboard: React.FC = () => {
                   <Refresh fontSize="small" />
                 </IconButton>
               </Tooltip>
-            </Box>            {loading ? (
+            </Box>            {loading || activitiesLoading ? (
               <List>
-                {[...Array(5)].map((_, index) => (
-                  <ListItem key={`skeleton-${index}`} divider={index < 4}>
+                {Array.from({ length: 5 }, (_, index) => (
+                  <ListItem key={`activity-skeleton-${index}`} divider={index < 4}>
                     <ListItemAvatar>
                       <Skeleton variant="circular" width={40} height={40} />
                     </ListItemAvatar>
@@ -316,43 +341,67 @@ const Dashboard: React.FC = () => {
                 ))}
               </List>
             ) : (
-              <List>
-                {recentActivities.map((activity, index) => (
-                  <ListItem key={activity.id} divider={index < recentActivities.length - 1}>
-                    <ListItemAvatar>
-                      <Avatar sx={{ backgroundColor: `${getActivityColor(activity.type)}.main` }}>
-                        {getActivityIcon(activity.type)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={activity.description}
-                      secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                          <Typography variant="caption" color="textSecondary">
-                            {formatRelativeTime(activity.createdAt)}
-                          </Typography>
-                          {activity.user && (
-                            <Chip 
-                              label={activity.user} 
-                              size="small" 
-                              variant="outlined" 
-                              sx={{ height: 20 }}
-                            />
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-                {recentActivities.length === 0 && !loading && (
-                  <ListItem>
-                    <ListItemText 
-                      primary="Henüz aktivite bulunmuyor" 
-                      secondary="Sistem kullanımı başladığında aktiviteler burada görünecek"
-                    />
-                  </ListItem>
+              <>
+                <List>
+                  {paginatedActivities.activities.map((activity, index) => (
+                    <ListItem key={activity.id} divider={index < paginatedActivities.activities.length - 1}>
+                      <ListItemAvatar>
+                        <Avatar sx={{ backgroundColor: `${getActivityColor(activity.type)}.main` }}>
+                          {getActivityIcon(activity.type)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={activity.description}
+                        secondary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Typography variant="caption" color="textSecondary">
+                              {formatRelativeTime(activity.createdAt)}
+                            </Typography>
+                            {activity.user && (
+                              <Chip 
+                                label={activity.user} 
+                                size="small" 
+                                variant="outlined" 
+                                sx={{ height: 20 }}
+                              />
+                            )}
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                  {paginatedActivities.activities.length === 0 && !loading && !activitiesLoading && (
+                    <ListItem>
+                      <ListItemText 
+                        primary="Henüz aktivite bulunmuyor" 
+                        secondary="Sistem kullanımı başladığında aktiviteler burada görünecek"
+                      />
+                    </ListItem>
+                  )}
+                </List>
+                
+                {/* Sayfalama Kontrolleri */}
+                {paginatedActivities.totalPages > 1 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                    <Stack spacing={2}>
+                      <Pagination
+                        count={paginatedActivities.totalPages}
+                        page={paginatedActivities.currentPage}
+                        onChange={handlePageChange}
+                        color="primary"
+                        size="small"
+                        showFirstButton
+                        showLastButton
+                        disabled={activitiesLoading}
+                      />
+                      <Typography variant="caption" color="textSecondary" textAlign="center">
+                        Sayfa {paginatedActivities.currentPage} / {paginatedActivities.totalPages}
+                        {paginatedActivities.totalPages === 3 && " (Maksimum 3 sayfa)"}
+                      </Typography>
+                    </Stack>
+                  </Box>
                 )}
-              </List>
+              </>
             )}
           </Paper>
         </Grid>        {/* Hızlı İşlemler */}
