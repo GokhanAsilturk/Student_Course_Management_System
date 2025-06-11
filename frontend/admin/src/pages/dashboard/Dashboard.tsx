@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -12,6 +12,10 @@ import {
   ListItemAvatar,
   Avatar,
   Chip,
+  Alert,
+  Skeleton,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   People,
@@ -21,55 +25,11 @@ import {
   PersonAdd,
   SchoolOutlined,
   AssignmentTurnedIn,
+  Refresh,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { DashboardStats, RecentActivity } from '../../types';
-
-// Örnek veri - Bu veriler gerçek API'den gelecek
-const mockStats: DashboardStats = {
-  totalStudents: 150,
-  totalCourses: 25,
-  totalEnrollments: 320,
-  activeCourses: 22,
-};
-
-const mockRecentActivities: RecentActivity[] = [
-  {
-    id: '1',
-    type: 'student_created',
-    description: 'Yeni öğrenci eklendi: Ahmet Yılmaz',
-    createdAt: new Date().toISOString(),
-    user: 'Admin',
-  },
-  {
-    id: '2',
-    type: 'course_created',
-    description: 'Yeni ders oluşturuldu: React Programlama',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    user: 'Admin',
-  },
-  {
-    id: '3',
-    type: 'enrollment_created',
-    description: 'Öğrenci kaydı yapıldı: Matematik 101',
-    createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    user: 'Admin',
-  },
-  {
-    id: '4',
-    type: 'student_created',
-    description: 'Yeni öğrenci eklendi: Fatma Demir',
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    user: 'Admin',
-  },
-  {
-    id: '5',
-    type: 'enrollment_deleted',
-    description: 'Öğrenci kaydı silindi: Fizik 201',
-    createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-    user: 'Admin',
-  },
-];
+import { dashboardService } from '../../services';
 
 interface StatCardProps {
   title: string;
@@ -159,12 +119,66 @@ const formatRelativeTime = (dateString: string) => {
     return `${diffInHours} saat önce`;
   } else {
     const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays} gün önce`;
-  }
+    return `${diffInDays} gün önce`;  }
 };
+
+// Loading skeleton komponenti
+const StatCardSkeleton = () => (
+  <Card elevation={0} sx={{ height: '100%', borderRadius: 3 }}>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Skeleton variant="text" width={100} height={20} />
+          <Skeleton variant="text" width={60} height={40} />
+        </Box>
+        <Skeleton variant="circular" width={56} height={56} />
+      </Box>
+    </CardContent>
+  </Card>
+);
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalStudents: 0,
+    totalCourses: 0,
+    totalEnrollments: 0,
+    activeCourses: 0,
+  });  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // API'den verileri çekme fonksiyonu
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Dashboard verilerini paralel olarak çek
+      const [statsData, activitiesData] = await Promise.all([
+        dashboardService.getDashboardStats(),
+        dashboardService.getRecentActivities()
+      ]);
+
+      setStats(statsData);
+      setRecentActivities(activitiesData);
+    } catch (err) {
+      console.error('Dashboard veri yükleme hatası:', err);
+      setError('Dashboard verileri yüklenirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // İlk yükleme
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // Manuel yenileme fonksiyonu
+  const handleRefresh = async () => {
+    await fetchDashboardData();
+  };
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -178,100 +192,183 @@ const Dashboard: React.FC = () => {
         navigate('/enrollments/add');
         break;
       default:
-        break;
-    }
+        break;    }
   };
 
   return (
     <Box>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
-        Dashboard
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" component="h1">
+          Dashboard
+        </Typography>
+        <Tooltip title="Verileri Yenile">
+          <IconButton 
+            onClick={handleRefresh} 
+            disabled={loading}
+            sx={{ 
+              bgcolor: 'primary.main', 
+              color: 'white',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+              '&:disabled': {
+                bgcolor: 'action.disabled',
+                color: 'action.disabled',
+              }
+            }}
+          >
+            <Refresh />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* Hata mesajı */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* İstatistik Kartları */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Toplam Öğrenci"
-            value={mockStats.totalStudents}
-            icon={<People />}
-            color="#2196f3"
-          />
+          {loading ? (
+            <StatCardSkeleton />
+          ) : (
+            <StatCard
+              title="Toplam Öğrenci"
+              value={stats.totalStudents}
+              icon={<People />}
+              color="#2196f3"
+            />
+          )}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Toplam Ders"
-            value={mockStats.totalCourses}
-            icon={<School />}
-            color="#4caf50"
-          />
+          {loading ? (
+            <StatCardSkeleton />
+          ) : (
+            <StatCard
+              title="Toplam Ders"
+              value={stats.totalCourses}
+              icon={<School />}
+              color="#4caf50"
+            />
+          )}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Toplam Kayıt"
-            value={mockStats.totalEnrollments}
-            icon={<Assignment />}
-            color="#ff9800"
-          />
+          {loading ? (
+            <StatCardSkeleton />
+          ) : (
+            <StatCard
+              title="Toplam Kayıt"
+              value={stats.totalEnrollments}
+              icon={<Assignment />}
+              color="#ff9800"
+            />
+          )}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Aktif Ders"
-            value={mockStats.activeCourses}
-            icon={<TrendingUp />}
-            color="#9c27b0"
-          />
+          {loading ? (
+            <StatCardSkeleton />
+          ) : (
+            <StatCard
+              title="Aktif Ders"
+              value={stats.activeCourses}
+              icon={<TrendingUp />}
+              color="#9c27b0"
+            />
+          )}
         </Grid>
-      </Grid>
-
-      <Grid container spacing={3}>
-        {/* Son Aktiviteler */}
-        <Grid item xs={12} md={8}>
+      </Grid>      <Grid container spacing={3}>
+        {/* Son Aktiviteler */}        <Grid item xs={12} md={8}>
           <Paper elevation={3} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Son Aktiviteler
-            </Typography>
-            <List>
-              {mockRecentActivities.map((activity, index) => (
-                <ListItem key={activity.id} divider={index < mockRecentActivities.length - 1}>
-                  <ListItemAvatar>
-                    <Avatar sx={{ backgroundColor: `${getActivityColor(activity.type)}.main` }}>
-                      {getActivityIcon(activity.type)}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={activity.description}
-                    secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Typography variant="caption" color="textSecondary">
-                          {formatRelativeTime(activity.createdAt)}
-                        </Typography>
-                        {activity.user && (
-                          <Chip 
-                            label={activity.user} 
-                            size="small" 
-                            variant="outlined" 
-                            sx={{ height: 20 }}
-                          />
-                        )}
-                      </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">
+                Son Aktiviteler
+              </Typography>
+              <Tooltip title="Aktiviteleri Yenile">
+                <IconButton 
+                  onClick={handleRefresh} 
+                  disabled={loading}
+                  size="small"
+                  sx={{ 
+                    color: 'primary.main',
+                    '&:disabled': {
+                      color: 'action.disabled',
                     }
-                  />
-                </ListItem>
-              ))}
-            </List>
+                  }}
+                >
+                  <Refresh fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>            {loading ? (
+              <List>
+                {[...Array(5)].map((_, index) => (
+                  <ListItem key={`skeleton-${index}`} divider={index < 4}>
+                    <ListItemAvatar>
+                      <Skeleton variant="circular" width={40} height={40} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={<Skeleton variant="text" width="60%" />}
+                      secondary={<Skeleton variant="text" width="40%" />}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <List>
+                {recentActivities.map((activity, index) => (
+                  <ListItem key={activity.id} divider={index < recentActivities.length - 1}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ backgroundColor: `${getActivityColor(activity.type)}.main` }}>
+                        {getActivityIcon(activity.type)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={activity.description}
+                      secondary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                          <Typography variant="caption" color="textSecondary">
+                            {formatRelativeTime(activity.createdAt)}
+                          </Typography>
+                          {activity.user && (
+                            <Chip 
+                              label={activity.user} 
+                              size="small" 
+                              variant="outlined" 
+                              sx={{ height: 20 }}
+                            />
+                          )}
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+                {recentActivities.length === 0 && !loading && (
+                  <ListItem>
+                    <ListItemText 
+                      primary="Henüz aktivite bulunmuyor" 
+                      secondary="Sistem kullanımı başladığında aktiviteler burada görünecek"
+                    />
+                  </ListItem>
+                )}
+              </List>
+            )}
           </Paper>
-        </Grid>
-
-        {/* Hızlı İşlemler */}
+        </Grid>        {/* Hızlı İşlemler */}
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Hızlı İşlemler
-            </Typography>            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Card 
                 variant="outlined" 
-                sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'action.hover' } }}
+                sx={{ 
+                  cursor: 'pointer', 
+                  '&:hover': { backgroundColor: 'action.hover' },
+                  transition: 'background-color 0.2s ease-in-out'
+                }}
                 onClick={() => handleQuickAction('add-student')}
               >
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -282,7 +379,11 @@ const Dashboard: React.FC = () => {
               
               <Card 
                 variant="outlined" 
-                sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'action.hover' } }}
+                sx={{ 
+                  cursor: 'pointer', 
+                  '&:hover': { backgroundColor: 'action.hover' },
+                  transition: 'background-color 0.2s ease-in-out'
+                }}
                 onClick={() => handleQuickAction('add-course')}
               >
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -293,7 +394,11 @@ const Dashboard: React.FC = () => {
               
               <Card 
                 variant="outlined" 
-                sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'action.hover' } }}
+                sx={{ 
+                  cursor: 'pointer', 
+                  '&:hover': { backgroundColor: 'action.hover' },
+                  transition: 'background-color 0.2s ease-in-out'
+                }}
                 onClick={() => handleQuickAction('add-enrollment')}
               >
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
