@@ -1,7 +1,7 @@
 {
   "name": "yedt-egitim-yonetim-sistemi",
   "version": "1.0.0",
-  "description": "Eğitim Yönetim Sistemi - Tam Stack Uygulaması",
+  "description": "Eğitim Yönetim Sistemi - Full Stack Uygulaması",
   "scripts": {
     "dev": "docker-compose up -d",
     "prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d",

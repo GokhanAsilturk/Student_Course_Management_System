@@ -18,8 +18,8 @@ timeout /t 30 /nobreak >nul
 echo ✅ Tüm servisler başlatıldı!
 echo.
 echo 📍 Erişim Bilgileri:
-echo    🎯 Admin Panel: http://localhost:3000
-echo    👥 Öğrenci Portal: http://localhost:3002
+echo    🎯 Admin Panel: http://localhost:3001
+echo    👥 Öğrenci Portal: http://localhost:3000
 echo    🔧 API: http://localhost:5000
 echo    🗄️  PgAdmin: http://localhost:5050 (admin@yedt.com / admin123)
 echo.

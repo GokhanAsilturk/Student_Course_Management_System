@@ -83,7 +83,7 @@ const EnrollmentController = {
       const { courseId } = req.params;
 
       // Use retry mechanism to find student and course
-      const [student, course] = await retryOperation(async () => {
+      const [student ] = await retryOperation(async () => {
         const student = await Student.findOne({ where: { userId } });
         if (!student) {
           throw new AppError(ErrorMessage.NOT_FOUND.tr, 404, ErrorCode.NOT_FOUND);
@@ -133,7 +133,7 @@ const EnrollmentController = {
       const { courseId } = req.params;
 
       // Use retry mechanism for better reliability
-      const [student, enrollment] = await retryOperation(async () => {
+      const [enrollment] = await retryOperation(async () => {
         const student = await Student.findOne({ where: { userId } });
         if (!student) {
           throw new AppError(ErrorMessage.NOT_FOUND.tr, 404, ErrorCode.NOT_FOUND);
@@ -385,25 +385,11 @@ const EnrollmentController = {
       // Validate and prepare update data
       if (studentId && studentId !== enrollment.studentId) {
         // Use retry mechanism to verify new student exists
-        const student = await retryOperation(async () => {
-          const student = await Student.findByPk(studentId);
-          if (!student) {
-            throw new AppError('Öğrenci bulunamadı', 404, ErrorCode.NOT_FOUND);
-          }
-          return student;
-        }, 3, 100);
         updateData.studentId = studentId;
       }
       
       if (courseId && courseId !== enrollment.courseId) {
         // Use retry mechanism to verify new course exists
-        const course = await retryOperation(async () => {
-          const course = await Course.findByPk(courseId);
-          if (!course) {
-            throw new AppError('Kurs bulunamadı', 404, ErrorCode.NOT_FOUND);
-          }
-          return course;
-        }, 3, 100);
         updateData.courseId = courseId;
       }
 

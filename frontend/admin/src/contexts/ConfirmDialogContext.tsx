@@ -43,9 +43,9 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
     setDialogState({
       ...options,
       isOpen: true,
-      confirmText: options.confirmText || 'Onayla',
-      cancelText: options.cancelText || 'İptal',
-      severity: options.severity || 'warning',
+      confirmText: options.confirmText ?? 'Onayla',
+      cancelText: options.cancelText ?? 'İptal',
+      severity: options.severity ?? 'warning',
     });
   }, []);
 
