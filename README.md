@@ -1,4 +1,4 @@
-# YEDT Eğitim Yönetim Sistemi
+# Eğitim Yönetim Sistemi
 
 Tam kapsamlı eğitim yönetim sistemi - Backend API, Admin Panel ve Öğrenci Portal'ı içerir.
 
