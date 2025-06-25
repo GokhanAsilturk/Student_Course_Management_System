@@ -1,9 +1,9 @@
-# YEDT Eğitim Yönetim Sistemi - Proje Raporu
+# Eğitim Yönetim Sistemi - Proje Raporu
 
 ## 📋 Proje Genel Bilgileri
 
 ### Proje Adı
-**YEDT Eğitim Yönetim Sistemi** (Yedt Education Management System)
+**Eğitim Yönetim Sistemi** (Education Management System)
 
 ### Proje Tipi
 Full-Stack Web Uygulaması - Eğitim Sektörü Case Study
@@ -331,7 +331,7 @@ Integration Testleri:
 
 ### Proje Yapısı
 ```
-yedt_case/
+case/
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/
